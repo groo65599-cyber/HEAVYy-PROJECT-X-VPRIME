@@ -20,17 +20,6 @@ jobs:
       - name: Checkout Repository
         uses: actions/checkout@v4
 
-      - name: Check Project Files
-        run: |
-          echo "===== CURRENT DIRECTORY ====="
-          pwd
-
-          echo "===== PROJECT FILES ====="
-          find . -maxdepth 3 -type f | sort
-
-          echo "===== GRADLE FILES ====="
-          find . -type f \( -name "*.gradle" -o -name "*.gradle.kts" -o -name "settings.gradle" -o -name "gradle.properties" \) -print
-
       - name: Setup Java 17
         uses: actions/setup-java@v6
         with:
@@ -40,10 +29,30 @@ jobs:
       - name: Setup Android SDK
         uses: android-actions/setup-android@v4
         with:
-          packages: |
-            platform-tools
-            platforms;android-35
-            build-tools;35.0.0
+          packages: 'platform-tools'
+
+      - name: Install Android SDK Packages
+        run: |
+          yes | sdkmanager --licenses
+
+          sdkmanager \
+            "platforms;android-35" \
+            "build-tools;35.0.0"
+
+      - name: Verify Android SDK
+        run: |
+          echo "===== ANDROID SDK ====="
+          echo "ANDROID_HOME=$ANDROID_HOME"
+          echo "ANDROID_SDK_ROOT=$ANDROID_SDK_ROOT"
+
+          echo "===== INSTALLED PACKAGES ====="
+          sdkmanager --list_installed
+
+          echo "===== PLATFORM ====="
+          ls -lah "$ANDROID_SDK_ROOT/platforms/android-35"
+
+          echo "===== BUILD TOOLS ====="
+          ls -lah "$ANDROID_SDK_ROOT/build-tools/35.0.0"
 
       - name: Setup Gradle 8.9
         uses: gradle/actions/setup-gradle@v6
@@ -60,12 +69,11 @@ jobs:
         run: |
           gradle --version
 
-      - name: Check Android SDK
+      - name: Check Project Files
         run: |
-          sdkmanager --list | head -50
+          echo "===== PROJECT FILES ====="
+          find . -maxdepth 3 -type f | sort
 
-      - name: Check Required Project Files
-        run: |
           test -f settings.gradle
           test -f build.gradle
           test -f app/build.gradle
